@@ -1,32 +1,40 @@
 import datetime
 import pytz
 import socket
+import logging
 
 from ogn.client import AprsClient
 from ogn.parser import parse, ParseError
 
-# output
-HOST = "localhost"
-PORT = 40000
 
+# output
+HOST = "readsb"
+PORT = 3022
+solo_messaggi_con_icao = False
+
+logger = logging.getLogger("logger")
+logger.warning("Flarm-ogn in partenza!")
 
 def process_beacon(raw_message):
     try:
         beacon = parse(raw_message, calculate_relations=True)
         if beacon['aprs_type'].startswith('position'):
+            logger.debug(f"beacon: {beacon}")
             keys = beacon.keys()
-            sbs = "MSG,3,0,0,"
+            sbs = "MSG,3,1,1,"
             if "name" in keys:
-                if not beacon["name"][:3] == "ICA":
-                    return
+                if solo_messaggi_con_icao:
+                    if not beacon["name"][:3] == "ICA":
+                        return
             else:
                 return
+
             if "address" in keys:
                 sbs += beacon["address"] + ","
             else:
                 return
 
-            sbs += "0,"
+            sbs += "1,"
             now = datetime.datetime.now(pytz.timezone('Europe/Rome'))
             time = beacon["timestamp"]
             date = time.strftime("%Y/%m/%d")
@@ -43,7 +51,8 @@ def process_beacon(raw_message):
             sbs += ","
 
             if "altitude" in keys:
-                sbs += str(int(beacon["altitude"])) + ","
+                if beacon["altitude"]:
+                    sbs += str(int(beacon["altitude"])) + ","
                 #sbs += ","
             else:
                 sbs += ","
@@ -67,13 +76,14 @@ def process_beacon(raw_message):
             #    sbs += str(beacon["climb_rate"]) + ","
             # else:
             #    sbs += ","
-            sbs += ",0,,0,0"
+            sbs += ",,,,,"
             code1 = chr(13)  # Device Control 3 (oft. XOFF)
             code2 = chr(10)  # Data Line Escape
             sbs += code1 + code2
+            logger.debug(f"Messaggio SBS: {sbs}")
+            #with open("D:\\sbs.txt", "wb") as f:
+            #    f.write(sbs.encode())
 
-            with open("D:\\sbs.txt", "wb") as f:
-                f.write(sbs.encode())
 
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((HOST, PORT))
@@ -95,28 +105,3 @@ try:
 except KeyboardInterrupt:
     print('\nStop ogn gateway')
     client.disconnect()
-
-"""
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect((HOST, PORT))
-    while True:
-        data = s.recv(1024)
-
-        with open("D:\\sbs2.txt", "wb") as f:
-            f.write(data)
-"""
-
-"""
-with open("D:\\sbs2.txt", "rb+") as f:
-    a = list(f.read())
-
-with open("D:\\sbs.txt", "rb+") as f:
-    b = list(f.read())
-
-for i in range(len(a)):
-    try:
-        if a[i] == b[i]:
-            continue
-    except:
-        print(a[i:])
-"""
