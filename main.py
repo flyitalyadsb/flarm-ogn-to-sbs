@@ -9,7 +9,7 @@ import argparse
 
 # Parsing Arguments
 parser = argparse.ArgumentParser(description="Execute the Flarm-ogn script with custom configurations.")
-parser.add_argument('--readsb-host', default="readsb_ingest", help="Host for READSB.")
+parser.add_argument('--readsb-host', default="localhost", help="Host for READSB.")
 parser.add_argument('--port', type=int, default=3022, help="Port number.")
 parser.add_argument('--only-messages-with-icao', action="store_true", help="Forward to readsb only messages with ICAO.")
 parser.add_argument('--timezone', default="Europe/Rome", help="Timezone.")
@@ -46,7 +46,7 @@ def process_beacon(raw_message):
         send_to_server(sbs)
 
     except (ParseError, NotImplementedError, AttributeError) as e:
-        logger.warning(f"Error processing beacon: {e}")
+        logger.debug(f"Error processing beacon: {e}")
 
 
 def build_sbs_message(beacon):
@@ -55,18 +55,18 @@ def build_sbs_message(beacon):
 
     # Create base SBS string with required fields
     sbs_parts = [
-        "MSG,3,1,1,",
+        "MSG,3,1,1",
         beacon["address"],
-        "1,",
-        beacon["timestamp"].strftime("%Y/%m/%d,%X.%f")[:20],
-        now.strftime("%Y/%m/%d,%X.%f")[:20],
+        "1",
+        beacon["timestamp"].strftime("%Y/%m/%d,%X.%f")[:23],
+        now.strftime("%Y/%m/%d,%X.%f")[:23],
         "",
-        str(int(beacon.get("altitude", ""))) or "",
+        str(int(beacon.get("altitude"))) if beacon.get("altitude") and beacon["altitude"] else "",
         str(beacon.get("ground_speed", "")) or "",
         str(beacon.get("track", "")) or "",
         str(beacon["latitude"]),
         str(beacon["longitude"]),
-        ",,,,,",
+        ",,,,",
         chr(13) + chr(10)
     ]
 
@@ -77,6 +77,8 @@ def send_to_server(message):
     """Sends the SBS message to the server."""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            print(message)
+
             s.connect((READSB_HOST, PORT))
             s.sendall(message.encode())
             logger.debug(f"SBS message sent: {message}")
@@ -93,7 +95,6 @@ try:
     client.run(callback=process_beacon, autoreconnect=True)
 except KeyboardInterrupt:
     logger.info('Stopping ogn gateway due to keyboard interruption')
-except Exception as e:
-    logger.error(f"Unexpected error: {e}")
+
 finally:
     client.disconnect()
