@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  flarm-ogn-to-sbs:
+    build: ./
+    #image: ghcr.io/flyitalyadsb/flarm_ogn_converter:latest
+    container_name: flarm_ogn_converter
+    restart: always
+    environment:
+      - READSB_HOST=readsb_ingest
+      - PORT=3022
+      - ONLY_MESSAGES_WITH_ICAO=true
+      - TIMEZONE=Europe/Rome
+    networks:
+      - flarm_network
+
+networks:
+  flarm_network:
+    driver: bridge

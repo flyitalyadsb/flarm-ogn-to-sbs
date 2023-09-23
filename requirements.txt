@@ -1,0 +1,2 @@
+pytz~=2023.3.post1
+ogn-client
