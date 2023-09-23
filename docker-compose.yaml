@@ -2,8 +2,8 @@ version: '3'
 
 services:
   flarm-ogn-to-sbs:
-    build: ./
-    #image: ghcr.io/flyitalyadsb/flarm_ogn_converter:latest
+    #build: ./
+    image: ghcr.io/flyitalyadsb/flarm_ogn_converter:latest
     container_name: flarm_ogn_converter
     restart: always
     environment:
