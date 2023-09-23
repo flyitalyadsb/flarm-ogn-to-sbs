@@ -1,4 +1,6 @@
 import datetime
+import time
+
 import pytz
 import socket
 import logging
@@ -87,8 +89,8 @@ def send_to_server(message):
             logger.debug(f"SBS message sent: {message}")
     except socket.error as e:
         logger.error(f"Failed to send message to server: {e}")
-        # TODO reconnect
-
+        logger.error("Wait one second and retry")
+        time.sleep(1)
 
 # Main execution
 client = AprsClient(aprs_user='N0CALL')
