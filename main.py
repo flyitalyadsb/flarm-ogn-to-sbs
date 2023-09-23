@@ -46,7 +46,7 @@ def process_beacon(raw_message):
         send_to_server(sbs)
 
     except (ParseError, NotImplementedError, AttributeError) as e:
-        logger.error(f"Error processing beacon: {e}")
+        logger.warning(f"Error processing beacon: {e}")
 
 
 def build_sbs_message(beacon):
