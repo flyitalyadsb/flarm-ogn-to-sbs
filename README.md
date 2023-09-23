@@ -40,6 +40,22 @@ into a Basestation
    docker-compose down && docker-compose up -d
    ```
 
+## Script Options
+
+Here's a breakdown of the available script options:
+
+- `--host`: If used with `--listen-on`, specifies the address the utility binds to; otherwise, it's the address of readsb. Default is `localhost`.
+
+- `--port`: Specifies the port number to forward the SBS data.
+
+- `--listen-on`: Sets the utility to listen mode on the given port number. Useful if you want the utility to act as a server and wait for incoming connections.
+
+- `--only-messages-with-icao`: If set, the utility will only forward messages to readsb that contain an ICAO address.
+
+- `--timezone`: Specifies the timezone for timestamping. Default is `Europe/Rome`.
+
+- `--debug`: Enables detailed debug logging.
+
 ## 🔗 Useful Links
 
 - [OGN](https://www.glidernet.org/)

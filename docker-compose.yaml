@@ -1,19 +1,26 @@
 version: '3'
 
 services:
-  flarm-ogn-to-sbs:
+  flarm_ogn_to_sbs:
     #build: ./
     image: ghcr.io/flyitalyadsb/flarm-ogn-to-sbs:latest
     container_name: flarm_ogn_to_sbs
     restart: always
-    environment:
-      - READSB_HOST=readsb_ingest
-      - PORT=3022
-      - ONLY_MESSAGES_WITH_ICAO=true
-      - TIMEZONE=Europe/Rome
-    networks:
-      - flarm_network
+    command:
+      - --host
+      - "flarm_ogn_to_sbs"
+      - --listen-on
+      - "3024"
+      - --only-messages-with-icao
 
-networks:
-  flarm_network:
-    driver: bridge
+  readsb_ingest:
+    image: ghcr.io/katlol/readsb:dev
+    container_name: readsb_ingest
+    restart: unless-stopped
+    entrypoint: /usr/local/bin/readsb-uuid
+    command:
+      - --net
+      - --quiet
+      - --net-connector=flarm_ogn_to_sbs,3024,sbs_in_mlat
+      - --debug=nS
+      - --net-beast-reduce-interval=0.2

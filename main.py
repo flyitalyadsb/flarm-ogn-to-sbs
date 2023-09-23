@@ -1,4 +1,5 @@
 import datetime
+import threading
 import time
 
 import pytz
@@ -9,29 +10,108 @@ from ogn.parser import parse, ParseError
 
 import argparse
 
+# Setting up logging
+logger = logging.getLogger("MAIN")
+logger.warning("Starting Flarm ogn to sbs!")
+
 # Parsing Arguments
 parser = argparse.ArgumentParser(description="Execute the Flarm-ogn script with custom configurations.")
-parser.add_argument('--readsb-host', default="localhost", help="Host for READSB.")
-parser.add_argument('--port', type=int, default=3022, help="Port number.")
+parser.add_argument('--host', required=True, default="localhost", help="If used with --listen-on, the "
+                                                                       "address that utility binds else the address "
+                                                                       "of readsb.")
+parser.add_argument('--port', type=int, default=None, help="Port number.")
+parser.add_argument('--listen-on', type=int, default=None, help="Listen on port number.")
+
 parser.add_argument('--only-messages-with-icao', action="store_true", help="Forward to readsb only messages with ICAO.")
 parser.add_argument('--timezone', default="Europe/Rome", help="Timezone.")
 parser.add_argument('--debug', action="store_true", help="Enable debug logging.")
 args = parser.parse_args()
 
 # Configuration
-READSB_HOST = args.readsb_host
+READSB_HOST = args.host
 PORT = args.port
 ONLY_MESSAGES_WITH_ICAO = args.only_messages_with_icao
 TIMEZONE = args.timezone
+LISTEN_PORT = args.listen_on
+
 if args.debug:
     logging.basicConfig(level=logging.DEBUG)
 else:
     logging.basicConfig(level=logging.INFO)
 
-# Setting up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("MAIN")
-logger.warning("Starting Flarm ogn to sbs!")
+
+class SBSSender:
+    def __init__(self, host=None, port=None, listen_port=None):
+        self.host = host
+        self.port = port
+        self.listen_port = listen_port
+        self.socket = None
+        self.server_socket = None
+        self.clients = []
+        if self.port:
+            self.connect()
+        else:
+            self.setup_server()
+
+    def connect(self):
+        """Establishes a connection as a client."""
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((self.host, self.port))
+
+        if self.listen_port:
+            self.setup_server()
+
+    def setup_server(self):
+        """Sets up a server to listen for incoming client connections."""
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.bind((self.host, self.listen_port))
+        self.server_socket.listen(5)
+        logger.info(f"Listening for incoming connections on {self.host}:{self.listen_port}")
+        threading.Thread(target=self.accept_clients, daemon=True).start()
+
+    def accept_clients(self):
+        """Accepts incoming clients."""
+        while True:
+            client_socket, addr = self.server_socket.accept()
+            self.clients.append(client_socket)
+            logger.info(f"Accepted connection from {addr}")
+
+    def send_to_clients(self, message):
+        """Sends a message to all connected clients."""
+        for client in self.clients:
+            try:
+                client.sendall(message.encode())
+            except socket.error as e:
+                logger.error(f"Failed to send message to client: {e}")
+                self.clients.remove(client)
+
+    def send(self, message):
+        """Sends the message to the server."""
+        if self.socket is None:
+            self.connect()
+        try:
+            self.socket.sendall(message.encode())
+            logger.debug(f"SBS message sent: {message}")
+        except socket.error as e:
+            logger.error(f"Failed to send message to server: {e}")
+            logger.error("Reconnecting to the server...")
+            time.sleep(1)
+
+    def close(self):
+        """Closes the connection."""
+        if self.socket:
+            self.socket.close()
+            self.socket = None
+
+        if self.server_socket:
+            for client in self.clients:
+                client.close()
+            self.server_socket.close()
+            self.server_socket = None
+
+
+# Now, instantiate the SBSSender once
+sbs_sender = SBSSender(READSB_HOST, PORT, LISTEN_PORT)
 
 
 def process_beacon(raw_message):
@@ -50,7 +130,10 @@ def process_beacon(raw_message):
             return
 
         sbs = build_sbs_message(beacon)
-        send_to_server(sbs)
+        if PORT:
+            sbs_sender.send(sbs)
+        else:
+            sbs_sender.send_to_clients(sbs)
 
     except (ParseError, NotImplementedError, AttributeError) as e:
         logger.debug(f"Error processing beacon: {e}")
@@ -73,24 +156,11 @@ def build_sbs_message(beacon):
         str(beacon.get("track", "")) or "",
         str(beacon["latitude"]),
         str(beacon["longitude"]),
-        ",,,,",
-        chr(13) + chr(10)
+        ",,,,,"
     ]
+    sbs = ','.join(sbs_parts) + chr(13) + chr(10)  # Device Control 3 (oft. XOFF) Data Line Escape
+    return sbs
 
-    return ','.join(sbs_parts)
-
-
-def send_to_server(message):
-    """Sends the SBS message to the server."""
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((READSB_HOST, PORT))
-            s.sendall(message.encode())
-            logger.debug(f"SBS message sent: {message}")
-    except socket.error as e:
-        logger.error(f"Failed to send message to server: {e}")
-        logger.error("Wait one second and retry")
-        time.sleep(1)
 
 # Main execution
 client = AprsClient(aprs_user='N0CALL')
