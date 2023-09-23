@@ -24,7 +24,7 @@ TIMEZONE = args.timezone
 # Setting up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("MAIN")
-logger.warning("Starting Flarm-ogn!")
+logger.warning("Starting Flarm ogn to sbs!")
 
 
 def process_beacon(raw_message):

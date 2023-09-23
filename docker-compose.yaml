@@ -3,8 +3,8 @@ version: '3'
 services:
   flarm-ogn-to-sbs:
     #build: ./
-    image: ghcr.io/flyitalyadsb/flarm_ogn_converter:latest
-    container_name: flarm_ogn_converter
+    image: ghcr.io/flyitalyadsb/flarm-ogn-to-sbs:latest
+    container_name: flarm_ogn_to_sbs
     restart: always
     environment:
       - READSB_HOST=readsb_ingest
