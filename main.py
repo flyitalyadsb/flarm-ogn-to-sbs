@@ -23,7 +23,7 @@ TIMEZONE = args.timezone
 
 # Setting up logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("MAIN")
 logger.warning("Starting Flarm-ogn!")
 
 
