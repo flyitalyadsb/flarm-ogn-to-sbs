@@ -13,6 +13,7 @@ parser.add_argument('--readsb-host', default="localhost", help="Host for READSB.
 parser.add_argument('--port', type=int, default=3022, help="Port number.")
 parser.add_argument('--only-messages-with-icao', action="store_true", help="Forward to readsb only messages with ICAO.")
 parser.add_argument('--timezone', default="Europe/Rome", help="Timezone.")
+parser.add_argument('--debug', action="store_true", help="Enable debug logging.")
 args = parser.parse_args()
 
 # Configuration
@@ -20,6 +21,10 @@ READSB_HOST = args.readsb_host
 PORT = args.port
 ONLY_MESSAGES_WITH_ICAO = args.only_messages_with_icao
 TIMEZONE = args.timezone
+if args.debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 # Setting up logging
 logging.basicConfig(level=logging.INFO)
@@ -77,8 +82,6 @@ def send_to_server(message):
     """Sends the SBS message to the server."""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            print(message)
-
             s.connect((READSB_HOST, PORT))
             s.sendall(message.encode())
             logger.debug(f"SBS message sent: {message}")
