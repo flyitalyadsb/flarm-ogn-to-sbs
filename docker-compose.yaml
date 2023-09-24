@@ -14,7 +14,7 @@ services:
       - --only-messages-with-icao
 
   readsb_ingest:
-    image: ghcr.io/katlol/readsb:dev
+    image: ghcr.io/wiedehopf/readsb:dev
     container_name: readsb_ingest
     restart: unless-stopped
     entrypoint: /usr/local/bin/readsb-uuid
