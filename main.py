@@ -23,6 +23,8 @@ parser.add_argument('--port', type=int, default=None, help="Port number.")
 parser.add_argument('--listen-on', type=int, default=None, help="Listen on port number.")
 
 parser.add_argument('--only-messages-with-icao', action="store_true", help="Forward to readsb only messages with ICAO.")
+parser.add_argument('--location-filter', default=None, action="store",
+                    help="Filter data by location coordinates (format: lat,long,radius). Example: 45.5,10.2,500 filters planes within 500nm from the point with latitude 45.2 and longitude 10.2")
 parser.add_argument('--timezone', default="Europe/Rome", help="Timezone.")
 parser.add_argument('--debug', action="store_true", help="Enable debug logging.")
 args = parser.parse_args()
@@ -33,6 +35,7 @@ PORT = args.port
 ONLY_MESSAGES_WITH_ICAO = args.only_messages_with_icao
 TIMEZONE = args.timezone
 LISTEN_PORT = args.listen_on
+LOCATION_FILTER: str = args.location_filter
 
 if args.debug:
     logging.basicConfig(level=logging.DEBUG)
@@ -163,8 +166,12 @@ def build_sbs_message(beacon):
 
 
 # Main execution
-client = AprsClient(aprs_user='N0CALL')
-
+if LOCATION_FILTER:
+    tp = tuple(LOCATION_FILTER.split(","))
+    filter = f"r/{tp[0]}/{tp[1]}/{tp[2]}"
+    client = AprsClient(aprs_user='N0CALL', aprs_filter=filter)
+else:
+    client = AprsClient(aprs_user='N0CALL')
 try:
     client.connect()
     client.run(callback=process_beacon, autoreconnect=True)

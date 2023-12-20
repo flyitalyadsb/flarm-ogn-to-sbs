@@ -10,7 +10,7 @@ into a Basestation
 
 - 🔄 Converts Flarm OGN data to the SBS format.
 - 🔗 Forwards the data to prevalent ADS-B servers.
-- 🔍 Option to process only gliders, paragliders, etc., broadcasting a genuine ICAO code.
+- 🔍 Option to process only gliders, paragliders, etc., broadcasting a genuine ICAO code and filter data by location coordinates
 
 ## 🛠️ Installation
 
@@ -51,6 +51,8 @@ Here's a breakdown of the available script options:
 - `--listen-on`: Sets the utility to listen mode on the given port number. Useful if you want the utility to act as a server and wait for incoming connections.
 
 - `--only-messages-with-icao`: If set, the utility will only forward messages to readsb that contain an ICAO address.
+
+- `--location-filter`: "If used, the script will send only data within a radius from some coordinates (format: lat,long,radius)
 
 - `--timezone`: Specifies the timezone for timestamping. Default is `Europe/Rome`.
 
