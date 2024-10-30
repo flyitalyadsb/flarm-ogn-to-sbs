@@ -16,11 +16,11 @@ logger.warning("Starting Flarm ogn to sbs!")
 
 # Parsing Arguments
 parser = argparse.ArgumentParser(description="Execute the Flarm-ogn script with custom configurations.")
-parser.add_argument('--host', required=True, default="localhost", help="If used with --listen-on, the "
+parser.add_argument('--host', default="localhost", help="If used with --listen-on, the "
                                                                        "address that utility binds else the address "
                                                                        "of readsb.")
-parser.add_argument('--port', type=int, default=None, help="Port number.")
-parser.add_argument('--listen-on', type=int, default=None, help="Listen on port number.")
+parser.add_argument('--port', type=int, default=30003, help="Port number.")
+parser.add_argument('--listen-on', type=int, default=50000, help="Listen on port number.")
 
 parser.add_argument('--only-messages-with-icao', action="store_true", help="Forward to readsb only messages with ICAO.")
 parser.add_argument('--location-filter', default=None, action="store",

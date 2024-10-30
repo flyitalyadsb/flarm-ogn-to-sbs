@@ -14,16 +14,12 @@ into a Basestation
 
 ## 🛠️ Installation
 
-1. Clone the repository:
+   Clone the repository:
    ```
    git clone https://github.com/flyitalyadsb/flarm-ogn-to-sbs.git
    cd flarm-ogn-to-sbs
    ```
 
-2. Install the required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
 
 ## ⚙️ Configuration and Execution with Docker Compose
 
@@ -39,20 +35,35 @@ into a Basestation
    ```
    docker-compose down && docker-compose up -d
    ```
+   
+## ⚙️ Manual Execution
+
+   If you prefer not to use Docker, you can run the application directly using Python. 
+   
+1. Navigate to your repository's directory.
+2. Install the required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+3. Execute the following command:
+   ```
+      python main.py --listen-on 3024 --only-messages-with-icao
+   ```
+   Adjust the configuration options as needed, these options are just an example.
 
 ## Script Options
 
 Here's a breakdown of the available script options:
 
-- `--host`: If used with `--listen-on`, specifies the address the utility binds to; otherwise, it's the address of readsb. Default is `localhost`.
+- `--host`: If used with `--listen-on`, specifies the address the utility binds to; otherwise, it's the address of readsb/vrs/dump1090-fa. Default is `localhost`.
 
-- `--port`: Specifies the port number to forward the SBS data.
+- `--port`: Specifies the port number to forward the SBS data, default is 30003.
 
 - `--listen-on`: Sets the utility to listen mode on the given port number. Useful if you want the utility to act as a server and wait for incoming connections.
 
 - `--only-messages-with-icao`: If set, the utility will only forward messages to readsb that contain an ICAO address.
 
-- `--location-filter`: "If used, the script will send only data within a radius from some coordinates (format: lat,long,radius)
+- `--location-filter`: If used, the script will send only data within a radius from some coordinates (format: lat,long,radius)
 
 - `--timezone`: Specifies the timezone for timestamping. Default is `Europe/Rome`.
 
